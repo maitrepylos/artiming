@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Registration;
+use App\Models\RegistrationData;
 use Illuminate\Support\Facades\Validator;
 
-// app/Http/Controllers/RegistrationController.php
 class RegistrationController extends Controller
 {
     /**
@@ -17,6 +17,8 @@ class RegistrationController extends Controller
     {
         $event = Event::with(['categories' => function($q) {
             $q->where('is_active', true);
+        }, 'formFields' => function($q) {
+            $q->where('is_visible', true)->orderBy('order');
         }])
             ->where('slug', $slug)
             ->where('is_active', true)
@@ -32,7 +34,7 @@ class RegistrationController extends Controller
     {
         $event = Event::where('slug', $slug)->firstOrFail();
 
-        // Validation dynamique basée sur les champs de l'événement
+        // Validation des champs de base
         $rules = [
             'nom' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[a-zA-ZàâäéèêëîïôöûùüÿæœÀÂÄÉÈÊËÎÏÔÖÛÙÜŸÆŒ\s\-\.]+$/u'],
             'prenom' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[a-zA-ZàâäéèêëîïôöûùüÿæœÀÂÄÉÈÊËÎÏÔÖÛÙÜŸÆŒ\s\-\.]+$/u'],
@@ -42,6 +44,52 @@ class RegistrationController extends Controller
             'nationalite' => ['required', 'string', 'size:3'],
             'club' => ['nullable', 'string', 'max:100'],
         ];
+
+        // Ajouter les règles de validation pour les champs personnalisés
+        $customFields = $event->formFields()->where('is_visible', true)->get();
+        foreach ($customFields as $field) {
+            $fieldName = "custom_{$field->name}";
+            $fieldRules = [];
+
+            if ($field->is_required) {
+                $fieldRules[] = 'required';
+            } else {
+                $fieldRules[] = 'nullable';
+            }
+
+            // Règles selon le type
+            switch ($field->type) {
+                case 'email':
+                    $fieldRules[] = 'email';
+                    break;
+                case 'tel':
+                    $fieldRules[] = 'string';
+                    $fieldRules[] = 'max:20';
+                    break;
+                case 'number':
+                    $fieldRules[] = 'numeric';
+                    break;
+                case 'date':
+                    $fieldRules[] = 'date';
+                    break;
+                case 'text':
+                case 'textarea':
+                    $fieldRules[] = 'string';
+                    $fieldRules[] = 'max:1000';
+                    break;
+                case 'select':
+                case 'radio':
+                    if (!empty($field->options)) {
+                        $fieldRules[] = 'in:' . implode(',', $field->options);
+                    }
+                    break;
+                case 'checkbox':
+                    $fieldRules[] = 'boolean';
+                    break;
+            }
+
+            $rules[$fieldName] = $fieldRules;
+        }
 
         $validator = Validator::make($request->all(), $rules);
 
@@ -74,6 +122,18 @@ class RegistrationController extends Controller
             'status' => 'pending'
         ]);
 
+        // Sauvegarder les données des champs personnalisés
+        foreach ($customFields as $field) {
+            $fieldName = "custom_{$field->name}";
+            if ($request->has($fieldName)) {
+                RegistrationData::create([
+                    'registration_id' => $registration->id,
+                    'form_field_id' => $field->id,
+                    'value' => $request->input($fieldName)
+                ]);
+            }
+        }
+
         return response()->view('registration.success', [
             'registration' => $registration,
             'event' => $event
@@ -81,7 +141,7 @@ class RegistrationController extends Controller
     }
 
     /**
-     * Rechercher des participants (HTMX - pour dossart)
+     * Rechercher des participants (HTMX - pour dossard)
      */
     public function search(Request $request, $slug)
     {

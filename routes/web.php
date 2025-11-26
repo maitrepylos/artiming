@@ -2,6 +2,8 @@
 
 // routes/web.php
 
+use App\Http\Controllers\Admin\FormFieldController;
+use App\Http\Controllers\Admin\ImportExportController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -70,6 +72,32 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::delete('/events/{event}/categories/{category}', [CategoryController::class, 'destroy'])
         ->name('events.categories.destroy');
+
+    // Dans le groupe Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+    // Import/Export Excel
+    Route::get('/events/{event}/import-export', [ImportExportController::class, 'index'])
+        ->name('events.import-export');
+
+    Route::get('/events/{event}/export-excel', [ImportExportController::class, 'export'])
+        ->name('events.export-excel');
+
+    Route::post('/events/{event}/import-excel', [ImportExportController::class, 'import'])
+        ->name('events.import-excel');
+
+    Route::delete('/events/{event}/truncate', [ImportExportController::class, 'truncate'])
+        ->name('events.truncate-registrations');
+
+    // Gestion des champs de formulaire personnalisés
+Route::post('/events/{event}/form-fields', [FormFieldController::class, 'store'])
+    ->name('events.form-fields.store');
+
+Route::put('/events/{event}/form-fields/{formField}', [FormFieldController::class, 'update'])
+    ->name('events.form-fields.update');
+
+Route::delete('/events/{event}/form-fields/{formField}', [FormFieldController::class, 'destroy'])
+    ->name('events.form-fields.destroy');
+
 });
 
 /*

@@ -144,6 +144,101 @@
                     </select>
                 </div>
 
+                {{-- Champs personnalisés --}}
+                @if($event->formFields->where('is_visible', true)->count() > 0)
+                    <div class="divider">Informations complémentaires</div>
+
+                    @foreach($event->formFields->where('is_visible', true)->sortBy('order') as $field)
+                        <div class="form-control mb-4">
+                            <label class="label">
+                                <span class="label-text">
+                                    {{ $field->label }}
+                                    @if($field->is_required)
+                                        <span class="text-error">*</span>
+                                    @endif
+                                </span>
+                            </label>
+
+                            @switch($field->type)
+                                @case('text')
+                                @case('email')
+                                @case('tel')
+                                @case('number')
+                                    <input
+                                        type="{{ $field->type }}"
+                                        name="custom_{{ $field->name }}"
+                                        placeholder="{{ $field->placeholder }}"
+                                        class="input input-bordered"
+                                        {{ $field->is_required ? 'required' : '' }}>
+                                    @break
+
+                                @case('date')
+                                    <input
+                                        type="date"
+                                        name="custom_{{ $field->name }}"
+                                        class="input input-bordered"
+                                        {{ $field->is_required ? 'required' : '' }}>
+                                    @break
+
+                                @case('textarea')
+                                    <textarea
+                                        name="custom_{{ $field->name }}"
+                                        placeholder="{{ $field->placeholder }}"
+                                        class="textarea textarea-bordered"
+                                        rows="3"
+                                        {{ $field->is_required ? 'required' : '' }}></textarea>
+                                    @break
+
+                                @case('select')
+                                    <select
+                                        name="custom_{{ $field->name }}"
+                                        class="select select-bordered"
+                                        {{ $field->is_required ? 'required' : '' }}>
+                                        <option value="">Sélectionner...</option>
+                                        @foreach($field->options ?? [] as $option)
+                                            <option value="{{ $option }}">{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                    @break
+
+                                @case('radio')
+                                    <div class="flex flex-wrap gap-4">
+                                        @foreach($field->options ?? [] as $option)
+                                            <label class="label cursor-pointer gap-2">
+                                                <input
+                                                    type="radio"
+                                                    name="custom_{{ $field->name }}"
+                                                    value="{{ $option }}"
+                                                    class="radio radio-primary"
+                                                    {{ $field->is_required ? 'required' : '' }}>
+                                                <span class="label-text">{{ $option }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @break
+
+                                @case('checkbox')
+                                    <label class="label cursor-pointer justify-start gap-2">
+                                        <input
+                                            type="checkbox"
+                                            name="custom_{{ $field->name }}"
+                                            value="1"
+                                            class="checkbox checkbox-primary"
+                                            {{ $field->is_required ? 'required' : '' }}>
+                                        <span class="label-text">{{ $field->placeholder }}</span>
+                                    </label>
+                                    @break
+                            @endswitch
+
+                            @if($field->help_text)
+                                <label class="label">
+                                    <span class="label-text-alt text-base-content/70">{{ $field->help_text }}</span>
+                                </label>
+                            @endif
+                        </div>
+                    @endforeach
+                @endif
+
                 {{-- Club --}}
                 <div class="form-control mb-6">
                     <label class="label">

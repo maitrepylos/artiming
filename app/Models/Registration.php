@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Registration extends Model
 {
@@ -28,12 +30,12 @@ class Registration extends Model
         'is_paid' => 'boolean'
     ];
 
-    public function event()
+    public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
@@ -63,5 +65,19 @@ class Registration extends Model
                 ->orWhere('prenom', 'like', "%{$term}%")
                 ->orWhere('bib_number', 'like', "%{$term}%");
         });
+    }
+
+    /**
+     * Récupérer une donnée personnalisée par nom de champ
+     */
+    public function getCustomField(string $fieldName): ?string
+    {
+        $data = $this->customData()
+            ->whereHas('formField', function($q) use ($fieldName) {
+                $q->where('name', $fieldName);
+            })
+            ->first();
+
+        return $data?->value;
     }
 }

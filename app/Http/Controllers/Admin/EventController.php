@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -47,11 +48,47 @@ class EventController extends Controller
         return view('admin.events.edit', compact('event'));
     }
 
+    /**
+     * Mettre à jour un événement
+     */
+    public function update(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'event_date' => 'required|date',
+            'logo' => 'nullable|image|max:2048'
+        ]);
+
+        // Gérer le checkbox is_active (qui n'est pas envoyé si non coché)
+        $validated['is_active'] = $request->has('is_active');
+
+        // Gérer l'upload du logo
+        if ($request->hasFile('logo')) {
+            // Supprimer l'ancien logo si existe
+            if ($event->logo && Storage::disk('public')->exists($event->logo)) {
+                Storage::disk('public')->delete($event->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        // Mettre à jour l'événement
+        $event->update($validated);
+
+        return back()->with('success', 'Événement mis à jour avec succès !');
+    }
+
     public function destroy(Event $event)
     {
+        // Supprimer le logo si existe
+        if ($event->logo && Storage::disk('public')->exists($event->logo)) {
+            Storage::disk('public')->delete($event->logo);
+        }
+
         $event->delete();
+
         return redirect()->route('admin.events.index')
-            ->with('success', 'Événement supprimé');
+            ->with('success', 'Événement supprimé avec succès !');
     }
 
     /**
