@@ -14,6 +14,7 @@ class FormFieldController extends Controller
      */
     public function store(Request $request, Event $event)
     {
+      //  dd($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'label' => 'required|string|max:255',
@@ -21,8 +22,8 @@ class FormFieldController extends Controller
             'options' => 'nullable|string',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string|max:500',
-            'is_required' => 'boolean',
-            'is_visible' => 'boolean',
+          //  'is_required' => 'boolean',
+          //  'is_visible' => 'boolean',
             'order' => 'nullable|integer'
         ]);
 
@@ -42,6 +43,7 @@ class FormFieldController extends Controller
         $validated['is_required'] = $request->has('is_required');
         $validated['is_visible'] = $request->has('is_visible');
 
+
         $event->formFields()->create($validated);
 
         return back()->with('success', 'Champ personnalisé ajouté avec succès !');
@@ -58,8 +60,8 @@ class FormFieldController extends Controller
             'options' => 'nullable|string',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string|max:500',
-            'is_required' => 'boolean',
-            'is_visible' => 'boolean',
+          //  'is_required' => 'boolean',
+          //  'is_visible' => 'boolean',
             'order' => 'nullable|integer'
         ]);
 

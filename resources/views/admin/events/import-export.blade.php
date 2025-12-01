@@ -17,6 +17,23 @@
         @if(session('import_results'))
             @php $results = session('import_results'); @endphp
 
+            {{-- Catégories créées --}}
+            @if(!empty($results['categories_created']))
+                <div class="alert alert-info shadow-lg mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h3 class="font-bold">✨ {{ count($results['categories_created']) }} catégorie(s) créée(s) automatiquement :</h3>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            @foreach($results['categories_created'] as $categoryName)
+                                <li>{{ $categoryName }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
             @if($results['errors'] > 0)
                 <div class="alert alert-warning shadow-lg mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

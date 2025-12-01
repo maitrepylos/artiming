@@ -8,6 +8,7 @@ use App\Models\Category;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Exception;
 
 class RegistrationsImport
@@ -16,7 +17,8 @@ class RegistrationsImport
     protected $results = [
         'success' => 0,
         'errors' => 0,
-        'error_messages' => []
+        'error_messages' => [],
+        'categories_created' => []
     ];
 
     public function __construct(Event $event)
@@ -82,14 +84,12 @@ class RegistrationsImport
                         throw new Exception("Date de naissance invalide à la ligne " . ($rowCount + 2));
                     }
 
-                    // Trouver la catégorie par nom
-                    $category = $this->event->categories()
-                        ->where('name', $epreuveName)
-                        ->first();
-
-                    if (!$category) {
-                        throw new Exception("Catégorie '$epreuveName' introuvable à la ligne " . ($rowCount + 2));
+                    if (empty($epreuveName)) {
+                        throw new Exception("Nom de catégorie manquant à la ligne " . ($rowCount + 2));
                     }
+
+                    // Trouver ou créer la catégorie
+                    $category = $this->findOrCreateCategory($epreuveName);
 
                     // Créer l'inscription
                     Registration::create([
@@ -133,6 +133,45 @@ class RegistrationsImport
         }
 
         return $this->results;
+    }
+
+    /**
+     * Trouver ou créer une catégorie
+     */
+    protected function findOrCreateCategory(string $categoryName): Category
+    {
+        // Chercher d'abord si la catégorie existe déjà
+        $category = $this->event->categories()
+            ->where('name', $categoryName)
+            ->first();
+
+        // Si elle existe, la retourner
+        if ($category) {
+            return $category;
+        }
+
+        // Sinon, créer la catégorie
+        $code = Str::slug($categoryName, '_');
+
+        // S'assurer que le code est unique
+        $baseCode = $code;
+        $counter = 1;
+        while (Category::where('code', $code)->exists()) {
+            $code = $baseCode . '_' . $counter;
+            $counter++;
+        }
+
+        $category = $this->event->categories()->create([
+            'name' => $categoryName,
+            'code' => $code,
+            'is_active' => true,
+            'order' => $this->event->categories()->max('order') + 1 ?? 0
+        ]);
+
+        // Ajouter à la liste des catégories créées
+        $this->results['categories_created'][] = $categoryName;
+
+        return $category;
     }
 
     /**

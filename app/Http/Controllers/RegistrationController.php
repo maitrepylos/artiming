@@ -102,12 +102,12 @@ class RegistrationController extends Controller
         // Vérifier que la catégorie appartient à cet événement
         $category = $event->categories()->findOrFail($request->category_id);
 
-        // Vérifier si la catégorie est pleine
+/*        // Vérifier si la catégorie est pleine
         if ($category->isFull) {
             return response()->view('registration.errors', [
                 'errors' => ['Cette catégorie est complète.']
             ], 422);
-        }
+        }*/
 
         // Créer l'inscription
         $registration = Registration::create([
@@ -143,9 +143,11 @@ class RegistrationController extends Controller
     /**
      * Rechercher des participants (HTMX - pour dossard)
      */
-    public function search(Request $request, $slug)
+    public function search(Request $request, $eventId)
     {
-        $event = Event::where('slug', $slug)->firstOrFail();
+        // Récupérer l'événement par son ID
+        $event = \App\Models\Event::findOrFail($eventId);
+
         $term = $request->input('search', '');
 
         if (strlen($term) < 2) {
@@ -164,19 +166,19 @@ class RegistrationController extends Controller
     /**
      * Mettre à jour un participant (dossard, paiement)
      */
-    public function update(Request $request, $slug, $id)
+    public function update(Request $request, Event $event, Registration $registration)
     {
-        $event = Event::where('slug', $slug)->firstOrFail();
-        $registration = Registration::where('event_id', $event->id)->findOrFail($id);
-
         $validator = Validator::make($request->all(), [
-            'bib_number' => ['nullable', 'integer', 'unique:registrations,bib_number,' . $id],
+            'bib_number' => ['nullable', 'integer', 'unique:registrations,bib_number,' . $registration->id],
             'is_paid' => ['boolean'],
             'nom' => ['required', 'string'],
             'prenom' => ['required', 'string'],
             'sexe' => ['required', 'in:M,F,X'],
             'date_naissance' => ['required', 'date'],
             'category_id' => ['required', 'exists:categories,id'],
+            'nationalite' => ['nullable', 'string'],
+            'club' => ['nullable', 'string'],
+            'code_uci' => ['nullable', 'string'],
         ]);
 
         if ($validator->fails()) {
@@ -185,7 +187,11 @@ class RegistrationController extends Controller
             ], 422);
         }
 
-        $registration->update($request->all());
+        // Gérer le checkbox is_paid qui n'est pas envoyé si non coché
+        $data = $request->all();
+        $data['is_paid'] = $request->has('is_paid');
+
+        $registration->update($data);
 
         return response()->view('admin.partials.update-success', [
             'registration' => $registration

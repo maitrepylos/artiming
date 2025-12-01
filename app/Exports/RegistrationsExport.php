@@ -46,32 +46,44 @@ class RegistrationsExport
     {
         // Récupérer toutes les inscriptions
         $registrations = $this->event->registrations()
-            ->with('category')
+            ->with(['category', 'customData.formField'])
             ->orderByRaw('bib_number IS NULL')
             ->orderByRaw('CAST(bib_number AS INTEGER) DESC')
             ->orderBy('nom')
             ->orderBy('prenom')
             ->get();
 
+        // Récupérer les champs personnalisés de l'événement
+        $customFields = $this->event->formFields()->orderBy('order')->get();
+
         // Créer le spreadsheet
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Participants');
 
-        // En-têtes
+        // En-têtes de base
         $headers = [
             'ID',
             'Nom',
             'Prénom',
             'Sexe',
-            'Épreuve',
+            'Catégorie',
             'Date de naissance',
             'Nationalité',
             'Club',
             'Dossard',
             'Acquité'
         ];
+
+        // Ajouter les en-têtes des champs personnalisés
+        foreach ($customFields as $field) {
+            $headers[] = $field->label;
+        }
+
         $sheet->fromArray($headers, null, 'A1');
+
+        // Calculer la dernière colonne (pour le style)
+        $lastColumn = $this->getColumnLetter(count($headers));
 
         // Style des en-têtes
         $headerStyle = [
@@ -90,7 +102,7 @@ class RegistrationsExport
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN]
             ]
         ];
-        $sheet->getStyle('A1:J1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray($headerStyle);
 
         // Données
         $row = 2;
@@ -113,17 +125,26 @@ class RegistrationsExport
                 $registration->is_paid ? 1 : 0
             ];
 
+            // Ajouter les valeurs des champs personnalisés
+            foreach ($customFields as $field) {
+                $customValue = $registration->customData
+                    ->where('form_field_id', $field->id)
+                    ->first();
+
+                $rowData[] = $customValue ? $customValue->value : '';
+            }
+
             $sheet->fromArray($rowData, null, 'A' . $row);
             $row++;
         }
 
         // Auto-ajuster la largeur des colonnes
-        foreach (range('A', 'J') as $col) {
+        foreach (range('A', $lastColumn) as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
         // Style des données
-        $dataRange = 'A2:J' . ($row - 1);
+        $dataRange = 'A2:' . $lastColumn . ($row - 1);
         $dataStyle = [
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN]
@@ -135,5 +156,19 @@ class RegistrationsExport
         $sheet->getStyle($dataRange)->applyFromArray($dataStyle);
 
         return $spreadsheet;
+    }
+
+    /**
+     * Convertir un index de colonne en lettre (A, B, C, ..., Z, AA, AB, ...)
+     */
+    protected function getColumnLetter(int $index): string
+    {
+        $letter = '';
+        while ($index > 0) {
+            $index--;
+            $letter = chr(65 + ($index % 26)) . $letter;
+            $index = (int)($index / 26);
+        }
+        return $letter;
     }
 }

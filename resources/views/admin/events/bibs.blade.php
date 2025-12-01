@@ -45,10 +45,6 @@
                         id="search_participant"
                         placeholder="Tapez le nom, prénom ou numéro de dossard..."
                         class="input input-bordered input-lg"
-                        hx-get="{{ route('admin.events.search', $event->slug) }}"
-                        hx-trigger="keyup changed delay:300ms"
-                        hx-target="#search-results"
-                        hx-include="this"
                         autocomplete="off">
 
                     <div id="search-results" class="mt-2"></div>
@@ -60,19 +56,14 @@
                 </div>
 
                 {{-- Formulaire de mise à jour --}}
-                <form
-                    hx-post="{{ route('admin.events.update-bib', [$event->slug, 'ID_PLACEHOLDER']) }}"
-                    hx-target="#messages"
-                    hx-swap="innerHTML"
-                    id="update-form">
-
+                {{-- Remplacez TOUT le formulaire par ceci --}}
+                <form id="update-form" onsubmit="handleSubmit(event)">
                     @csrf
-                    @method('PUT')
 
                     <input type="hidden" id="registration_id" name="registration_id">
 
+                    {{-- Tous vos champs restent identiques --}}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-
                         {{-- Numéro de dossard --}}
                         <div class="form-control">
                             <label class="label">
@@ -115,7 +106,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-
                         {{-- Genre --}}
                         <div class="form-control">
                             <label class="label">
@@ -175,7 +165,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-
                         {{-- Nationalité --}}
                         <div class="form-control">
                             <label class="label">
@@ -185,7 +174,6 @@
                                 <option value="BEL" selected>🇧🇪 Belgique</option>
                                 <option value="FRA">🇫🇷 France</option>
                                 <option value="NLD">🇳🇱 Pays-Bas</option>
-                                {{-- Autres pays --}}
                             </select>
                         </div>
 
@@ -226,15 +214,42 @@
                             Mettre à jour
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
     </div>
 
     <script>
+        let searchTimeout = null;
+        let currentRegistrationId = null;
+
+        // Recherche avec Fetch API
+        document.getElementById('search_participant').addEventListener('input', function(e) {
+            const term = e.target.value;
+            const resultsDiv = document.getElementById('search-results');
+
+            clearTimeout(searchTimeout);
+
+            if (term.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch("{{ route('admin.events.search', $event->id) }}?search=" + encodeURIComponent(term))
+                    .then(response => response.text())
+                    .then(html => {
+                        resultsDiv.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                    });
+            }, 300);
+        });
+
         function selectParticipant(data) {
-            // Remplir le formulaire
+            currentRegistrationId = data.id;
+
             document.getElementById('registration_id').value = data.id;
             document.getElementById('nom').value = data.nom;
             document.getElementById('prenom').value = data.prenom;
@@ -246,41 +261,120 @@
             document.getElementById('bib_number').value = data.bib_number || '';
             document.getElementById('is_paid').checked = data.is_paid;
 
-            // Sélectionner le genre
             document.getElementById('sexe_' + data.sexe.toLowerCase()).checked = true;
 
-            // Afficher les infos du participant
             document.getElementById('participant-info').classList.remove('hidden');
             document.getElementById('participant-details').innerHTML = `
-            <div>
-                <strong class="text-lg">${data.nom} ${data.prenom}</strong><br>
-                <span class="text-sm">Course: ${data.category_name}</span><br>
-                ${data.bib_number ? `<span class="badge badge-primary">Dossard: ${data.bib_number}</span>` : '<span class="badge badge-ghost">Pas de dossard</span>'}
-                ${data.is_paid ? '<span class="badge badge-success ml-2">✓ Acquité</span>' : '<span class="badge badge-error ml-2">✗ Non acquité</span>'}
-            </div>
-        `;
+        <div>
+            <strong class="text-lg">${data.nom} ${data.prenom}</strong><br>
+            <span class="text-sm">Course: ${data.category_name}</span><br>
+            ${data.bib_number ? `<span class="badge badge-primary">Dossard: ${data.bib_number}</span>` : '<span class="badge badge-ghost">Pas de dossard</span>'}
+            ${data.is_paid ? '<span class="badge badge-success ml-2">✓ Acquité</span>' : '<span class="badge badge-error ml-2">✗ Non acquité</span>'}
+        </div>
+    `;
 
-            // Mettre à jour l'action du formulaire
-            const form = document.getElementById('update-form');
-            form.setAttribute('hx-post', form.getAttribute('hx-post').replace('ID_PLACEHOLDER', data.id));
-            htmx.process(form);
-
-            // Activer le bouton
             document.getElementById('submit-btn').disabled = false;
 
-            // Effacer les résultats de recherche
-            document.getElementById('search-results').innerHTML = '';
+            // Vider la recherche DIFFÉREMMENT
+            const searchInput = document.getElementById('search_participant');
+            const searchResults = document.getElementById('search-results');
 
-            // Focus sur le champ dossard
+            // Forcer le vidage
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            searchResults.style.display = 'none';
+
+            // Réafficher après un délai
+            setTimeout(() => {
+                searchResults.style.display = 'block';
+            }, 50);
+
             document.getElementById('bib_number').focus();
         }
 
+        function handleSubmit(event) {
+            event.preventDefault();
+
+            if (!currentRegistrationId) {
+                alert('Veuillez sélectionner un participant');
+                return;
+            }
+
+            const form = document.getElementById('update-form');
+            const formData = new FormData(form);
+            const messagesDiv = document.getElementById('messages');
+
+            // Désactiver le bouton
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Mise à jour...';
+
+            fetch("{{ url('admin/events/' . $event->id . '/registrations') }}/" + currentRegistrationId, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nom: formData.get('nom'),
+                    prenom: formData.get('prenom'),
+                    sexe: formData.get('sexe'),
+                    date_naissance: formData.get('date_naissance'),
+                    category_id: formData.get('category_id'),
+                    club: formData.get('club'),
+                    nationalite: formData.get('nationalite'),
+                    code_uci: formData.get('code_uci'),
+                    bib_number: formData.get('bib_number'),
+                    is_paid: document.getElementById('is_paid').checked ? 1 : 0
+                })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Erreur de mise à jour');
+                    return response.text();
+                })
+                .then(html => {
+                    messagesDiv.innerHTML = html;
+
+                    // Réactiver le bouton
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Mettre à jour
+            `;
+
+                    // Vider après succès
+                    setTimeout(() => {
+                        messagesDiv.innerHTML = '';
+                        resetForm();
+                    }, 2000);
+                })
+                .catch(error => {
+                    messagesDiv.innerHTML = `<div class="alert alert-error"><span>Erreur: ${error.message}</span></div>`;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Mettre à jour';
+                });
+        }
+
         function resetForm() {
+            currentRegistrationId = null;
             document.getElementById('update-form').reset();
             document.getElementById('participant-info').classList.add('hidden');
-            document.getElementById('search-results').innerHTML = '';
-            document.getElementById('search_participant').value = '';
             document.getElementById('submit-btn').disabled = true;
+
+            // NE PAS toucher au champ de recherche pour garder l'événement actif
+            // Juste vider visuellement
+            const searchInput = document.getElementById('search_participant');
+            const searchResults = document.getElementById('search-results');
+
+            // Enlever l'événement focus qui pourrait bloquer
+            searchInput.blur();
+
+            // Vider proprement
+            searchInput.value = '';
+            searchResults.innerHTML = '';
         }
     </script>
 

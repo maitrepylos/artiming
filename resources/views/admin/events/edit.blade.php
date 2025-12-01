@@ -23,7 +23,7 @@
         </div>
 
         {{-- Tab: Informations - VISIBLE PAR DÉFAUT --}}
-        <div id="tab-info" class="tab-content">
+        <div id="tab-info" class="tab-content" style="display: block;">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title mb-4">Informations de l'événement</h2>
@@ -124,7 +124,7 @@
         </div>
 
         {{-- Tab: Catégories --}}
-        <div id="tab-categories" class="tab-content hidden">
+        <div id="tab-categories" class="tab-content" style="display: none;">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title mb-4">Catégories de courses</h2>
@@ -136,8 +136,6 @@
                             <tr>
                                 <th>Nom</th>
                                 <th>Code</th>
-                                <th>Prix</th>
-                                <th>Max participants</th>
                                 <th>Inscriptions</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
@@ -148,8 +146,6 @@
                                 <tr>
                                     <td>{{ $category->name }}</td>
                                     <td><code>{{ $category->code }}</code></td>
-                                    <td>{{ $category->price ? number_format($category->price, 2) . '€' : '-' }}</td>
-                                    <td>{{ $category->max_participants ?? 'Illimité' }}</td>
                                     <td>
                                         <span class="badge badge-primary">{{ $category->registrations->count() }}</span>
                                     </td>
@@ -213,28 +209,7 @@
                                 </label>
                             </div>
 
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">Prix (€)</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    name="price"
-                                    placeholder="25.00"
-                                    class="input input-bordered">
-                            </div>
 
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">Participants maximum</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    name="max_participants"
-                                    placeholder="Laisser vide = illimité"
-                                    class="input input-bordered">
-                            </div>
                         </div>
 
                         <div class="flex justify-end mt-4">
@@ -251,7 +226,7 @@
         </div>
 
         {{-- Tab: Champs personnalisés --}}
-        <div id="tab-form-fields" class="tab-content hidden">
+        <div id="tab-form-fields" class="tab-content" style="display: none;">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title mb-4">Champs personnalisés du formulaire</h2>
@@ -446,7 +421,7 @@
         </div>
 
         {{-- Tab: Inscriptions --}}
-        <div id="tab-registrations" class="tab-content hidden">
+        <div id="tab-registrations" class="tab-content" style="display: none;">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title mb-4">Liste des inscriptions ({{ $event->registrations->count() }})</h2>
@@ -498,7 +473,7 @@
         </div>
 
         {{-- Tab: Import/Export --}}
-        <div id="tab-import-export" class="tab-content hidden">
+        <div id="tab-import-export" class="tab-content" style="display: none;">
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body text-center">
                     <h2 class="card-title justify-center mb-4">
@@ -538,12 +513,17 @@
 
                 // Retirer active de tous les tabs
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+                // Cacher tous les contenus
+                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
                 // Activer le tab cliqué
                 this.classList.add('tab-active');
                 const tabName = this.dataset.tab;
-                document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+                const tabContent = document.getElementById(`tab-${tabName}`);
+                if (tabContent) {
+                    tabContent.style.display = 'block';
+                }
             });
         });
 

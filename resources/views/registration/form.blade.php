@@ -130,15 +130,8 @@
                     <select name="category_id" class="select select-bordered" required>
                         <option value="">Sélectionner une course</option>
                         @foreach($event->categories as $category)
-                            <option value="{{ $category->id }}"
-                                    @if($category->isFull) disabled @endif>
+                            <option value="{{ $category->id }}">
                                 {{ $category->name }}
-                                @if($category->price)
-                                    - {{ number_format($category->price, 2) }}€
-                                @endif
-                                @if($category->max_participants)
-                                    ({{ $category->remaining_spaces }} places restantes)
-                                @endif
                             </option>
                         @endforeach
                     </select>

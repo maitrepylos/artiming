@@ -11,14 +11,14 @@ class Category extends Model
         'event_id',
         'name',
         'code',
-        'price',
-        'max_participants',
+        //'price',
+        //'max_participants',
         'order',
         'is_active'
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        //'price' => 'decimal:2',
         'is_active' => 'boolean'
     ];
 
@@ -33,20 +33,20 @@ class Category extends Model
     }
 
     // Vérifier si la catégorie est pleine
-    public function isFullAttribute(): bool
-    {
-        if (!$this->max_participants) {
-            return false;
-        }
-        return $this->registrations()->count() >= $this->max_participants;
-    }
+    /*  public function isfullattribute(): bool
+      {
+          if (!$this->max_participants) {
+              return false;
+          }
+          return $this->registrations()->count() >= $this->max_participants;
+      }
 
-    // Nombre de places restantes
-    public function getRemainingSpacesAttribute(): ?int
-    {
-        if (!$this->max_participants) {
-            return null;
-        }
-        return max(0, $this->max_participants - $this->registrations()->count());
-    }
+      // nombre de places restantes
+      public function getremainingspacesattribute(): ?int
+      {
+          if (!$this->max_participants) {
+              return null;
+          }
+          return max(0, $this->max_participants - $this->registrations()->count());
+      }*/
 }

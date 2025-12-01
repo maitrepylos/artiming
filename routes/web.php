@@ -52,11 +52,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         ->name('events.bibs');
 
     // Rechercher des participants (HTMX)
-    Route::get('/events/{slug}/search', [RegistrationController::class, 'search'])
+//    Route::get('/events/{slug}/search', [RegistrationController::class, 'search'])
+//        ->name('events.search');
+
+    // Dans le groupe admin
+    Route::get('/events/{event}/search', [RegistrationController::class, 'search'])
         ->name('events.search');
 
-    // Mettre à jour un participant (dossard, paiement)
-    Route::put('/events/{slug}/registrations/{id}', [RegistrationController::class, 'update'])
+// Mettre à jour un participant (dossard, paiement)
+    Route::put('/events/{event}/registrations/{registration}', [RegistrationController::class, 'update'])
         ->name('events.update-bib');
 
     // Export Excel

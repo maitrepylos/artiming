@@ -33,36 +33,26 @@ class DatabaseSeeder extends Seeder
         [
             'name' => 'Course de ESA Namur',
             'code' => 'esa',
-            'price' => 25.00,
-            'max_participants' => 100,
             'order' => 1
         ],
         [
             'name' => 'Ultra 3000',
             'code' => 'ultra_3000',
-            'price' => 35.00,
-            'max_participants' => 50,
             'order' => 2
         ],
         [
             'name' => 'Ultra 3000 Duo',
             'code' => 'ultra_3000_duo',
-            'price' => 60.00,
-            'max_participants' => 25,
             'order' => 3
         ],
         [
             'name' => 'Ultra 4000',
             'code' => 'ultra_4000',
-            'price' => 45.00,
-            'max_participants' => 40,
             'order' => 4
         ],
         [
             'name' => 'Ultra 6000',
             'code' => 'ultra_6000',
-            'price' => 55.00,
-            'max_participants' => 30,
             'order' => 5
         ],
     ];

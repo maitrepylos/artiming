@@ -14,8 +14,8 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:categories,code',
-            'price' => 'nullable|numeric|min:0',
-            'max_participants' => 'nullable|integer|min:1',
+         //   'price' => 'nullable|numeric|min:0',
+         //   'max_participants' => 'nullable|integer|min:1',
         ]);
 
         $event->categories()->create($validated);
@@ -28,8 +28,8 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'nullable|numeric|min:0',
-            'max_participants' => 'nullable|integer|min:1',
-            'is_active' => 'boolean'
+         //   'max_participants' => 'nullable|integer|min:1',
+         //   'is_active' => 'boolean'
         ]);
 
         $category->update($validated);
