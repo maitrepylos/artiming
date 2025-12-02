@@ -265,29 +265,19 @@
 
             document.getElementById('participant-info').classList.remove('hidden');
             document.getElementById('participant-details').innerHTML = `
-        <div>
-            <strong class="text-lg">${data.nom} ${data.prenom}</strong><br>
-            <span class="text-sm">Course: ${data.category_name}</span><br>
-            ${data.bib_number ? `<span class="badge badge-primary">Dossard: ${data.bib_number}</span>` : '<span class="badge badge-ghost">Pas de dossard</span>'}
-            ${data.is_paid ? '<span class="badge badge-success ml-2">✓ Acquité</span>' : '<span class="badge badge-error ml-2">✗ Non acquité</span>'}
-        </div>
-    `;
+            <div>
+                <strong class="text-lg">${data.nom} ${data.prenom}</strong><br>
+                <span class="text-sm">Course: ${data.category_name}</span><br>
+                ${data.bib_number ? `<span class="badge badge-primary">Dossard: ${data.bib_number}</span>` : '<span class="badge badge-ghost">Pas de dossard</span>'}
+                ${data.is_paid ? '<span class="badge badge-success ml-2">✓ Acquité</span>' : '<span class="badge badge-error ml-2">✗ Non acquité</span>'}
+            </div>
+        `;
 
             document.getElementById('submit-btn').disabled = false;
 
-            // Vider la recherche DIFFÉREMMENT
-            const searchInput = document.getElementById('search_participant');
-            const searchResults = document.getElementById('search-results');
-
-            // Forcer le vidage
-            searchInput.value = '';
-            searchResults.innerHTML = '';
-            searchResults.style.display = 'none';
-
-            // Réafficher après un délai
-            setTimeout(() => {
-                searchResults.style.display = 'block';
-            }, 50);
+            // Vider la recherche
+            document.getElementById('search_participant').value = '';
+            document.getElementById('search-results').innerHTML = '';
 
             document.getElementById('bib_number').focus();
         }
