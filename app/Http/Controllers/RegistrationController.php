@@ -176,7 +176,7 @@ class RegistrationController extends Controller
             'sexe' => ['required', 'in:M,F,X'],
             'date_naissance' => ['required', 'date'],
             'category_id' => ['required', 'exists:categories,id'],
-            'nationalite' => ['nullable', 'string'],
+            'nationalite' => ['required', 'string'],
             'club' => ['nullable', 'string'],
             'code_uci' => ['nullable', 'string'],
         ]);

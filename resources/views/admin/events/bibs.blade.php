@@ -36,7 +36,7 @@
             <div class="card-body">
 
                 {{-- Recherche de participant --}}
-                <div class="form-control mb-6">
+                <div class="form-control mb-6 relative">
                     <label class="label">
                         <span class="label-text font-semibold">Rechercher un participant</span>
                     </label>
@@ -47,7 +47,7 @@
                         class="input input-bordered input-lg"
                         autocomplete="off">
 
-                    <div id="search-results" class="mt-2"></div>
+                    <div id="search-results" class="mt-2 absolute top-full left-0 right-0 z-50"></div>
                 </div>
 
                 {{-- Info participant sélectionné --}}
@@ -56,13 +56,11 @@
                 </div>
 
                 {{-- Formulaire de mise à jour --}}
-                {{-- Remplacez TOUT le formulaire par ceci --}}
                 <form id="update-form" onsubmit="handleSubmit(event)">
                     @csrf
 
                     <input type="hidden" id="registration_id" name="registration_id">
 
-                    {{-- Tous vos champs restent identiques --}}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         {{-- Numéro de dossard --}}
                         <div class="form-control">
@@ -223,9 +221,51 @@
         let searchTimeout = null;
         let currentRegistrationId = null;
 
+        // Fonction pour sélectionner un participant
+        function selectParticipant(element) {
+            // Annuler toute recherche en cours
+            clearTimeout(searchTimeout);
+
+            // Récupérer les données
+            currentRegistrationId = element.dataset.id;
+
+            document.getElementById('registration_id').value = element.dataset.id;
+            document.getElementById('nom').value = element.dataset.nom;
+            document.getElementById('prenom').value = element.dataset.prenom;
+            document.getElementById('date_naissance').value = element.dataset.date_naissance;
+            document.getElementById('category_id').value = element.dataset.category_id;
+            document.getElementById('club').value = element.dataset.club || '';
+            document.getElementById('nationalite').value = element.dataset.nationalite || 'BEL';
+            document.getElementById('code_uci').value = element.dataset.code_uci || '';
+            document.getElementById('bib_number').value = element.dataset.bib_number || '';
+            document.getElementById('is_paid').checked = element.dataset.is_paid === '1';
+
+            const sexe = element.dataset.sexe;
+            if (sexe) {
+                const radio = document.getElementById('sexe_' + sexe.toLowerCase());
+                if (radio) radio.checked = true;
+            }
+
+            // Afficher les infos du participant
+            document.getElementById('participant-info').classList.remove('hidden');
+            document.getElementById('participant-details').innerHTML =
+                '<strong>' + element.dataset.nom + ' ' + element.dataset.prenom + '</strong><br>' +
+                '<span>Course: ' + element.dataset.category_name + '</span>';
+
+            // Activer le bouton et vider la recherche
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('search_participant').value = '';
+
+            // Focus sur le dossard
+            setTimeout(() => {
+                document.getElementById('bib_number').focus();
+            }, 100);
+        }
+
         // Recherche avec Fetch API
         document.getElementById('search_participant').addEventListener('input', function(e) {
-            const term = e.target.value;
+            const term = e.target.value.trim();
             const resultsDiv = document.getElementById('search-results');
 
             clearTimeout(searchTimeout);
@@ -243,44 +283,27 @@
                     })
                     .catch(error => {
                         console.error('Erreur:', error);
+                        resultsDiv.innerHTML = '<div class="alert alert-error">Erreur de recherche</div>';
                     });
             }, 300);
         });
 
-        function selectParticipant(data) {
-            currentRegistrationId = data.id;
+        // Fermer les résultats si on clique ailleurs
+        document.addEventListener('click', function(e) {
+            const searchInput = document.getElementById('search_participant');
+            const resultsDiv = document.getElementById('search-results');
 
-            document.getElementById('registration_id').value = data.id;
-            document.getElementById('nom').value = data.nom;
-            document.getElementById('prenom').value = data.prenom;
-            document.getElementById('date_naissance').value = data.date_naissance;
-            document.getElementById('category_id').value = data.category_id;
-            document.getElementById('club').value = data.club || '';
-            document.getElementById('nationalite').value = data.nationalite || 'BEL';
-            document.getElementById('code_uci').value = data.code_uci || '';
-            document.getElementById('bib_number').value = data.bib_number || '';
-            document.getElementById('is_paid').checked = data.is_paid;
+            if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.innerHTML = '';
+            }
+        });
 
-            document.getElementById('sexe_' + data.sexe.toLowerCase()).checked = true;
-
-            document.getElementById('participant-info').classList.remove('hidden');
-            document.getElementById('participant-details').innerHTML = `
-            <div>
-                <strong class="text-lg">${data.nom} ${data.prenom}</strong><br>
-                <span class="text-sm">Course: ${data.category_name}</span><br>
-                ${data.bib_number ? `<span class="badge badge-primary">Dossard: ${data.bib_number}</span>` : '<span class="badge badge-ghost">Pas de dossard</span>'}
-                ${data.is_paid ? '<span class="badge badge-success ml-2">✓ Acquité</span>' : '<span class="badge badge-error ml-2">✗ Non acquité</span>'}
-            </div>
-        `;
-
-            document.getElementById('submit-btn').disabled = false;
-
-            // Vider la recherche
-            document.getElementById('search_participant').value = '';
-            document.getElementById('search-results').innerHTML = '';
-
-            document.getElementById('bib_number').focus();
-        }
+        // Fermer avec Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('search-results').innerHTML = '';
+            }
+        });
 
         function handleSubmit(event) {
             event.preventDefault();
@@ -303,7 +326,7 @@
                 method: 'PUT',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
+                    'Accept': 'text/html',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -320,29 +343,34 @@
                 })
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Erreur de mise à jour');
-                    return response.text();
+                    // Toujours récupérer le HTML, même en cas d'erreur 422
+                    return response.text().then(html => {
+                        return { ok: response.ok, status: response.status, html: html };
+                    });
                 })
-                .then(html => {
-                    messagesDiv.innerHTML = html;
+                .then(result => {
+                    // Afficher le HTML (succès ou erreurs de validation)
+                    messagesDiv.innerHTML = result.html;
 
                     // Réactiver le bouton
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Mettre à jour
-            `;
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Mettre à jour
+                    `;
 
-                    // Vider après succès
-                    setTimeout(() => {
-                        messagesDiv.innerHTML = '';
-                        resetForm();
-                    }, 2000);
+                    // Si succès, vider après 2 secondes
+                    if (result.ok) {
+                        setTimeout(() => {
+                            messagesDiv.innerHTML = '';
+                            resetForm();
+                        }, 2000);
+                    }
                 })
                 .catch(error => {
-                    messagesDiv.innerHTML = `<div class="alert alert-error"><span>Erreur: ${error.message}</span></div>`;
+                    messagesDiv.innerHTML = `<div class="alert alert-error"><span>Erreur réseau: ${error.message}</span></div>`;
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Mettre à jour';
                 });
@@ -353,18 +381,8 @@
             document.getElementById('update-form').reset();
             document.getElementById('participant-info').classList.add('hidden');
             document.getElementById('submit-btn').disabled = true;
-
-            // NE PAS toucher au champ de recherche pour garder l'événement actif
-            // Juste vider visuellement
-            const searchInput = document.getElementById('search_participant');
-            const searchResults = document.getElementById('search-results');
-
-            // Enlever l'événement focus qui pourrait bloquer
-            searchInput.blur();
-
-            // Vider proprement
-            searchInput.value = '';
-            searchResults.innerHTML = '';
+            document.getElementById('search_participant').value = '';
+            document.getElementById('search-results').innerHTML = '';
         }
     </script>
 

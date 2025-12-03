@@ -14,7 +14,7 @@ class FormFieldController extends Controller
      */
     public function store(Request $request, Event $event)
     {
-      //  dd($request);
+        //  dd($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'label' => 'required|string|max:255',
@@ -22,8 +22,8 @@ class FormFieldController extends Controller
             'options' => 'nullable|string',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string|max:500',
-          //  'is_required' => 'boolean',
-          //  'is_visible' => 'boolean',
+            //  'is_required' => 'boolean',
+            //  'is_visible' => 'boolean',
             'order' => 'nullable|integer'
         ]);
 
@@ -46,7 +46,7 @@ class FormFieldController extends Controller
 
         $event->formFields()->create($validated);
 
-        return back()->with('success', 'Champ personnalisé ajouté avec succès !');
+        return redirect()->route('admin.events.edit', $event)->withFragment('form-fields')->with('success', 'Champ personnalisé ajouté avec succès !');
     }
 
     /**
@@ -60,8 +60,8 @@ class FormFieldController extends Controller
             'options' => 'nullable|string',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string|max:500',
-          //  'is_required' => 'boolean',
-          //  'is_visible' => 'boolean',
+            //  'is_required' => 'boolean',
+            //  'is_visible' => 'boolean',
             'order' => 'nullable|integer'
         ]);
 
@@ -77,7 +77,7 @@ class FormFieldController extends Controller
 
         $formField->update($validated);
 
-        return back()->with('success', 'Champ mis à jour avec succès !');
+        return redirect()->route('admin.events.edit', $event)->withFragment('form-fields')->with('success', 'Champ mis à jour avec succès !');
     }
 
     /**
@@ -87,7 +87,7 @@ class FormFieldController extends Controller
     {
         $formField->delete();
 
-        return back()->with('success', 'Champ supprimé avec succès !');
+        return redirect()->route('admin.events.edit', $event)->withFragment('form-fields')->with('success', 'Champ supprimé avec succès !');
     }
 
     /**

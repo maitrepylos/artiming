@@ -14,32 +14,41 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:categories,code',
-         //   'price' => 'nullable|numeric|min:0',
-         //   'max_participants' => 'nullable|integer|min:1',
+            'order' => 'nullable|integer|min:0',
         ]);
+
+        // Déterminer l'ordre si non fourni
+        if (!isset($validated['order']) || $validated['order'] === null) {
+            $maxOrder = $event->categories()->max('order') ?? 0;
+            $validated['order'] = $maxOrder + 1;
+        }
+
+        // Par défaut, la catégorie est active
+        $validated['is_active'] = true;
 
         $event->categories()->create($validated);
 
-        return back()->with('success', 'Catégorie ajoutée');
+        return redirect()->route('admin.events.edit', $event)->withFragment('categories')->with('success', 'Catégorie ajoutée');
     }
 
     public function update(Request $request, Event $event, Category $category)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-         //   'max_participants' => 'nullable|integer|min:1',
-         //   'is_active' => 'boolean'
+            'order' => 'nullable|integer|min:0',
         ]);
+
+        // Gérer le checkbox is_active
+        $validated['is_active'] = $request->has('is_active');
 
         $category->update($validated);
 
-        return back()->with('success', 'Catégorie mise à jour');
+        return redirect()->route('admin.events.edit', $event)->withFragment('categories')->with('success', 'Catégorie mise à jour');
     }
 
     public function destroy(Event $event, Category $category)
     {
         $category->delete();
-        return back()->with('success', 'Catégorie supprimée');
+        return redirect()->route('admin.events.edit', $event)->withFragment('categories')->with('success', 'Catégorie supprimée');
     }
 }

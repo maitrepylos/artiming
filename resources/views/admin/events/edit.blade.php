@@ -134,6 +134,7 @@
                         <table class="table">
                             <thead>
                             <tr>
+                                <th>Ordre</th>
                                 <th>Nom</th>
                                 <th>Code</th>
                                 <th>Inscriptions</th>
@@ -142,8 +143,9 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @forelse($event->categories as $category)
+                            @forelse($event->categories->sortBy('order') as $category)
                                 <tr>
+                                    <td>{{ $category->order ?? '-' }}</td>
                                     <td>{{ $category->name }}</td>
                                     <td><code>{{ $category->code }}</code></td>
                                     <td>
@@ -156,19 +158,106 @@
                                             <span class="badge badge-ghost">Inactif</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="flex gap-2">
+                                        {{-- Bouton Éditer --}}
+                                        <button type="button" class="btn btn-info btn-xs" onclick="document.getElementById('modal-edit-category-{{ $category->id }}').showModal()">
+                                            Éditer
+                                        </button>
+                                        {{-- Bouton Supprimer --}}
                                         <form action="{{ route('admin.events.categories.destroy', [$event, $category]) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-error btn-xs" onclick="return confirm('Supprimer cette catégorie ?')">
+                                            <button type="submit" class="btn btn-error btn-xs" onclick="return confirm('Supprimer cette catégorie ? Les inscriptions associées seront également supprimées.')">
                                                 Supprimer
                                             </button>
                                         </form>
                                     </td>
                                 </tr>
+
+                                {{-- Modal d'édition pour cette catégorie --}}
+                                <dialog id="modal-edit-category-{{ $category->id }}" class="modal">
+                                    <div class="modal-box w-11/12 max-w-lg">
+                                        <form method="dialog">
+                                            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                                        </form>
+                                        <h3 class="font-bold text-lg mb-4">Éditer la catégorie : {{ $category->name }}</h3>
+
+                                        <form action="{{ route('admin.events.categories.update', [$event, $category]) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+
+                                            <div class="form-control mb-4">
+                                                <label class="label">
+                                                    <span class="label-text">Nom de la catégorie <span class="text-error">*</span></span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="name"
+                                                    value="{{ $category->name }}"
+                                                    class="input input-bordered"
+                                                    required>
+                                            </div>
+
+                                            <div class="form-control mb-4">
+                                                <label class="label">
+                                                    <span class="label-text">Code unique</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value="{{ $category->code }}"
+                                                    class="input input-bordered bg-base-200"
+                                                    disabled>
+                                                <label class="label">
+                                                    <span class="label-text-alt text-warning">Non modifiable (utilisé comme identifiant)</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="form-control mb-4">
+                                                <label class="label">
+                                                    <span class="label-text">Ordre d'affichage</span>
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name="order"
+                                                    value="{{ $category->order }}"
+                                                    class="input input-bordered"
+                                                    min="0">
+                                            </div>
+
+                                            <div class="form-control mb-6">
+                                                <label class="label cursor-pointer">
+                                                    <span class="label-text">Catégorie active</span>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_active"
+                                                        class="toggle toggle-success"
+                                                        {{ $category->is_active ? 'checked' : '' }}>
+                                                </label>
+                                                <label class="label">
+                                                    <span class="label-text-alt">Si désactivée, la catégorie n'apparaîtra plus dans le formulaire d'inscription</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="modal-action">
+                                                <button type="button" class="btn btn-ghost" onclick="document.getElementById('modal-edit-category-{{ $category->id }}').close()">
+                                                    Annuler
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Enregistrer
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <form method="dialog" class="modal-backdrop">
+                                        <button>close</button>
+                                    </form>
+                                </dialog>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Aucune catégorie créée</td>
+                                    <td colspan="6" class="text-center">Aucune catégorie créée</td>
                                 </tr>
                             @endforelse
                             </tbody>
@@ -181,10 +270,10 @@
                     <form action="{{ route('admin.events.categories.store', $event) }}" method="POST">
                         @csrf
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text">Nom de la catégorie</span>
+                                    <span class="label-text">Nom de la catégorie <span class="text-error">*</span></span>
                                 </label>
                                 <input
                                     type="text"
@@ -196,20 +285,31 @@
 
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text">Code unique</span>
+                                    <span class="label-text">Code unique <span class="text-error">*</span></span>
                                 </label>
                                 <input
                                     type="text"
                                     name="code"
                                     placeholder="Ex: ultra_3000"
                                     class="input input-bordered"
+                                    pattern="[a-zA-Z0-9_]+"
                                     required>
                                 <label class="label">
-                                    <span class="label-text-alt">Uniquement lettres, chiffres et underscores</span>
+                                    <span class="label-text-alt">Lettres, chiffres et underscores uniquement</span>
                                 </label>
                             </div>
 
-
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">Ordre d'affichage</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    name="order"
+                                    placeholder="Auto"
+                                    class="input input-bordered"
+                                    min="0">
+                            </div>
                         </div>
 
                         <div class="flex justify-end mt-4">
@@ -269,7 +369,12 @@
                                             <span class="badge badge-ghost badge-sm">Non</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="flex gap-2">
+                                        {{-- Bouton Éditer --}}
+                                        <button type="button" class="btn btn-info btn-xs" onclick="document.getElementById('modal-edit-field-{{ $field->id }}').showModal()">
+                                            Éditer
+                                        </button>
+                                        {{-- Bouton Supprimer --}}
                                         <form action="{{ route('admin.events.form-fields.destroy', [$event, $field]) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
@@ -279,6 +384,150 @@
                                         </form>
                                     </td>
                                 </tr>
+
+                                {{-- Modal d'édition pour ce champ --}}
+                                <dialog id="modal-edit-field-{{ $field->id }}" class="modal">
+                                    <div class="modal-box w-11/12 max-w-2xl">
+                                        <form method="dialog">
+                                            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                                        </form>
+                                        <h3 class="font-bold text-lg mb-4">Éditer le champ : {{ $field->label }}</h3>
+
+                                        <form action="{{ route('admin.events.form-fields.update', [$event, $field]) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Nom technique</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value="{{ $field->name }}"
+                                                        class="input input-bordered input-sm bg-base-200"
+                                                        disabled>
+                                                    <label class="label">
+                                                        <span class="label-text-alt text-warning">Non modifiable</span>
+                                                    </label>
+                                                </div>
+
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Label affiché <span class="text-error">*</span></span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="label"
+                                                        value="{{ $field->label }}"
+                                                        class="input input-bordered input-sm"
+                                                        required>
+                                                </div>
+
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Type de champ <span class="text-error">*</span></span>
+                                                    </label>
+                                                    <select name="type" class="select select-bordered select-sm" required onchange="toggleOptionsField(this, {{ $field->id }})">
+                                                        <option value="text" {{ $field->type === 'text' ? 'selected' : '' }}>Texte simple</option>
+                                                        <option value="email" {{ $field->type === 'email' ? 'selected' : '' }}>Email</option>
+                                                        <option value="tel" {{ $field->type === 'tel' ? 'selected' : '' }}>Téléphone</option>
+                                                        <option value="number" {{ $field->type === 'number' ? 'selected' : '' }}>Nombre</option>
+                                                        <option value="date" {{ $field->type === 'date' ? 'selected' : '' }}>Date</option>
+                                                        <option value="textarea" {{ $field->type === 'textarea' ? 'selected' : '' }}>Zone de texte</option>
+                                                        <option value="select" {{ $field->type === 'select' ? 'selected' : '' }}>Liste déroulante</option>
+                                                        <option value="radio" {{ $field->type === 'radio' ? 'selected' : '' }}>Boutons radio</option>
+                                                        <option value="checkbox" {{ $field->type === 'checkbox' ? 'selected' : '' }}>Case à cocher</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Ordre d'affichage</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="order"
+                                                        value="{{ $field->order }}"
+                                                        class="input input-bordered input-sm"
+                                                        min="0">
+                                                </div>
+                                            </div>
+
+                                            <div class="form-control mb-4" id="options-field-{{ $field->id }}" style="{{ in_array($field->type, ['select', 'radio']) ? '' : 'display: none;' }}">
+                                                <label class="label">
+                                                    <span class="label-text">Options (pour select/radio)</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="options"
+                                                    value="{{ is_array($field->options) ? implode(', ', $field->options) : $field->options }}"
+                                                    placeholder="Ex: Petit, Moyen, Grand, XL"
+                                                    class="input input-bordered input-sm">
+                                                <label class="label">
+                                                    <span class="label-text-alt">Séparez les options par des virgules</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Placeholder</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="placeholder"
+                                                        value="{{ $field->placeholder }}"
+                                                        placeholder="Texte d'exemple dans le champ"
+                                                        class="input input-bordered input-sm">
+                                                </div>
+
+                                                <div class="form-control">
+                                                    <label class="label">
+                                                        <span class="label-text">Texte d'aide</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="help_text"
+                                                        value="{{ $field->help_text }}"
+                                                        placeholder="Information supplémentaire"
+                                                        class="input input-bordered input-sm">
+                                                </div>
+                                            </div>
+
+                                            <div class="flex gap-6 mb-6">
+                                                <div class="form-control">
+                                                    <label class="label cursor-pointer gap-2">
+                                                        <input type="checkbox" name="is_required" class="checkbox checkbox-sm checkbox-error" {{ $field->is_required ? 'checked' : '' }}>
+                                                        <span class="label-text">Champ obligatoire</span>
+                                                    </label>
+                                                </div>
+
+                                                <div class="form-control">
+                                                    <label class="label cursor-pointer gap-2">
+                                                        <input type="checkbox" name="is_visible" class="checkbox checkbox-sm checkbox-success" {{ $field->is_visible ? 'checked' : '' }}>
+                                                        <span class="label-text">Visible dans le formulaire</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-action">
+                                                <button type="button" class="btn btn-ghost" onclick="document.getElementById('modal-edit-field-{{ $field->id }}').close()">
+                                                    Annuler
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Enregistrer
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <form method="dialog" class="modal-backdrop">
+                                        <button>close</button>
+                                    </form>
+                                </dialog>
                             @empty
                                 <tr>
                                     <td colspan="7" class="text-center">Aucun champ personnalisé</td>
@@ -506,28 +755,47 @@
     </div>
 
     <script>
-        // Gestion des tabs
+        // Gestion des tabs avec persistance dans l'URL
+        function activateTab(tabName) {
+            // Retirer active de tous les tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
+
+            // Cacher tous les contenus
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+            // Activer le tab
+            const tab = document.querySelector(`.tab[data-tab="${tabName}"]`);
+            if (tab) {
+                tab.classList.add('tab-active');
+            }
+
+            const tabContent = document.getElementById(`tab-${tabName}`);
+            if (tabContent) {
+                tabContent.style.display = 'block';
+            }
+
+            // Sauvegarder dans l'URL
+            window.location.hash = tabName;
+        }
+
+        // Au chargement, restaurer le tab depuis l'URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                activateTab(hash);
+            }
+        });
+
+        // Clic sur les tabs
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', function(e) {
                 e.preventDefault();
-
-                // Retirer active de tous les tabs
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
-
-                // Cacher tous les contenus
-                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-
-                // Activer le tab cliqué
-                this.classList.add('tab-active');
                 const tabName = this.dataset.tab;
-                const tabContent = document.getElementById(`tab-${tabName}`);
-                if (tabContent) {
-                    tabContent.style.display = 'block';
-                }
+                activateTab(tabName);
             });
         });
 
-        // Afficher/masquer le champ options selon le type sélectionné
+        // Afficher/masquer le champ options selon le type sélectionné (formulaire d'ajout)
         const fieldTypeSelect = document.getElementById('field-type');
         const optionsField = document.getElementById('options-field');
 
@@ -539,6 +807,18 @@
                     optionsField.style.display = 'none';
                 }
             });
+        }
+
+        // Afficher/masquer le champ options dans les modals d'édition
+        function toggleOptionsField(selectElement, fieldId) {
+            const optionsDiv = document.getElementById('options-field-' + fieldId);
+            if (optionsDiv) {
+                if (['select', 'radio'].includes(selectElement.value)) {
+                    optionsDiv.style.display = 'block';
+                } else {
+                    optionsDiv.style.display = 'none';
+                }
+            }
         }
     </script>
 
