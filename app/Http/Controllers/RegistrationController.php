@@ -24,6 +24,9 @@ class RegistrationController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        // Appliquer la locale de l'événement
+        $event->applyLocale();
+
         return view('registration.form', compact('event'));
     }
 
@@ -33,6 +36,9 @@ class RegistrationController extends Controller
     public function store(Request $request, $slug)
     {
         $event = Event::where('slug', $slug)->firstOrFail();
+
+        // Appliquer la locale de l'événement pour les messages de validation
+        $event->applyLocale();
 
         // Validation des champs de base
         $rules = [
@@ -101,13 +107,6 @@ class RegistrationController extends Controller
 
         // Vérifier que la catégorie appartient à cet événement
         $category = $event->categories()->findOrFail($request->category_id);
-
-/*        // Vérifier si la catégorie est pleine
-        if ($category->isFull) {
-            return response()->view('registration.errors', [
-                'errors' => ['Cette catégorie est complète.']
-            ], 422);
-        }*/
 
         // Créer l'inscription
         $registration = Registration::create([

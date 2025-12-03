@@ -76,6 +76,31 @@
                         @enderror
                     </div>
 
+                    {{-- Langue du formulaire --}}
+                    <div class="form-control mb-4">
+                        <label class="label">
+                            <span class="label-text font-semibold">Langue du formulaire d'inscription <span class="text-error">*</span></span>
+                        </label>
+                        <select
+                            name="locale"
+                            class="select select-bordered @error('locale') select-error @enderror"
+                            required>
+                            @foreach(\App\Models\Event::$availableLocales as $code => $name)
+                                <option value="{{ $code }}" {{ old('locale', 'fr') === $code ? 'selected' : '' }}>
+                                    {{ $name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('locale')
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                        @enderror
+                        <label class="label">
+                            <span class="label-text-alt">Cette langue sera utilisée pour le formulaire d'inscription public</span>
+                        </label>
+                    </div>
+
                     {{-- Logo --}}
                     <div class="form-control mb-4">
                         <label class="label">

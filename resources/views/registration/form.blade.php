@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="{{ $event->locale }}" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - {{ $event->name }}</title>
+    <title>{{ __('registration.registration_title') }} - {{ $event->name }}</title>
 
     {{-- Tailwind + DaisyUI --}}
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
@@ -34,7 +34,8 @@
     {{-- Formulaire d'inscription --}}
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            <h2 class="card-title mb-4">Formulaire d'inscription</h2>
+            <h2 class="card-title mb-2">{{ __('registration.registration_title') }}</h2>
+            <p class="text-sm text-base-content/70 mb-4">{{ __('registration.info.required_fields') }}</p>
 
             <form
                 hx-post="{{ route('event.register.store', $event->slug) }}"
@@ -48,24 +49,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Nom <span class="text-error">*</span></span>
+                            <span class="label-text">{{ __('registration.fields.last_name') }} <span class="text-error">*</span></span>
                         </label>
                         <input
                             type="text"
                             name="nom"
-                            placeholder="Dupont"
+                            placeholder="{{ __('registration.fields.last_name_placeholder') }}"
                             class="input input-bordered"
                             required>
                     </div>
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Prénom <span class="text-error">*</span></span>
+                            <span class="label-text">{{ __('registration.fields.first_name') }} <span class="text-error">*</span></span>
                         </label>
                         <input
                             type="text"
                             name="prenom"
-                            placeholder="Jean"
+                            placeholder="{{ __('registration.fields.first_name_placeholder') }}"
                             class="input input-bordered"
                             required>
                     </div>
@@ -74,20 +75,20 @@
                 {{-- Genre --}}
                 <div class="form-control mb-4">
                     <label class="label">
-                        <span class="label-text">Genre <span class="text-error">*</span></span>
+                        <span class="label-text">{{ __('registration.fields.gender') }} <span class="text-error">*</span></span>
                     </label>
                     <div class="flex gap-4">
                         <label class="label cursor-pointer gap-2">
                             <input type="radio" name="sexe" value="M" class="radio radio-primary" checked>
-                            <span class="label-text">Homme</span>
+                            <span class="label-text">{{ __('registration.fields.gender_male') }}</span>
                         </label>
                         <label class="label cursor-pointer gap-2">
                             <input type="radio" name="sexe" value="F" class="radio radio-primary">
-                            <span class="label-text">Femme</span>
+                            <span class="label-text">{{ __('registration.fields.gender_female') }}</span>
                         </label>
                         <label class="label cursor-pointer gap-2">
                             <input type="radio" name="sexe" value="X" class="radio radio-primary">
-                            <span class="label-text">Autre</span>
+                            <span class="label-text">{{ __('registration.fields.gender_other') }}</span>
                         </label>
                     </div>
                 </div>
@@ -96,7 +97,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Date de naissance <span class="text-error">*</span></span>
+                            <span class="label-text">{{ __('registration.fields.birth_date') }} <span class="text-error">*</span></span>
                         </label>
                         <input
                             type="date"
@@ -107,17 +108,22 @@
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Nationalité <span class="text-error">*</span></span>
+                            <span class="label-text">{{ __('registration.fields.nationality') }} <span class="text-error">*</span></span>
                         </label>
                         <select name="nationalite" class="select select-bordered" required>
-                            <option value="">Sélectionner</option>
-                            <option value="BEL" selected>🇧🇪 Belgique</option>
-                            <option value="FRA">🇫🇷 France</option>
-                            <option value="NLD">🇳🇱 Pays-Bas</option>
-                            <option value="DEU">🇩🇪 Allemagne</option>
-                            <option value="LUX">🇱🇺 Luxembourg</option>
-                            <option value="CHE">🇨🇭 Suisse</option>
-                            {{-- Ajouter les autres pays --}}
+                            <option value="">{{ __('registration.fields.nationality_placeholder') }}</option>
+                            <option value="BEL" selected>🇧🇪 {{ __('registration.nationalities.BEL') }}</option>
+                            <option value="FRA">🇫🇷 {{ __('registration.nationalities.FRA') }}</option>
+                            <option value="NLD">🇳🇱 {{ __('registration.nationalities.NLD') }}</option>
+                            <option value="DEU">🇩🇪 {{ __('registration.nationalities.DEU') }}</option>
+                            <option value="GBR">🇬🇧 {{ __('registration.nationalities.GBR') }}</option>
+                            <option value="LUX">🇱🇺 {{ __('registration.nationalities.LUX') }}</option>
+                            <option value="CHE">🇨🇭 {{ __('registration.nationalities.CHE') }}</option>
+                            <option value="ESP">🇪🇸 {{ __('registration.nationalities.ESP') }}</option>
+                            <option value="ITA">🇮🇹 {{ __('registration.nationalities.ITA') }}</option>
+                            <option value="PRT">🇵🇹 {{ __('registration.nationalities.PRT') }}</option>
+                            <option value="USA">🇺🇸 {{ __('registration.nationalities.USA') }}</option>
+                            <option value="CAN">🇨🇦 {{ __('registration.nationalities.CAN') }}</option>
                         </select>
                     </div>
                 </div>
@@ -125,10 +131,10 @@
                 {{-- Catégorie (Course) --}}
                 <div class="form-control mb-4">
                     <label class="label">
-                        <span class="label-text">Course <span class="text-error">*</span></span>
+                        <span class="label-text">{{ __('registration.fields.category') }} <span class="text-error">*</span></span>
                     </label>
                     <select name="category_id" class="select select-bordered" required>
-                        <option value="">Sélectionner une course</option>
+                        <option value="">{{ __('registration.fields.category_placeholder') }}</option>
                         @foreach($event->categories as $category)
                             <option value="{{ $category->id }}">
                                 {{ $category->name }}
@@ -137,9 +143,21 @@
                     </select>
                 </div>
 
+                {{-- Club --}}
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">{{ __('registration.fields.club') }}</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="club"
+                        placeholder="{{ __('registration.fields.club_placeholder') }}"
+                        class="input input-bordered">
+                </div>
+
                 {{-- Champs personnalisés --}}
                 @if($event->formFields->where('is_visible', true)->count() > 0)
-                    <div class="divider">Informations complémentaires</div>
+                    <div class="divider"></div>
 
                     @foreach($event->formFields->where('is_visible', true)->sortBy('order') as $field)
                         <div class="form-control mb-4">
@@ -187,7 +205,7 @@
                                         name="custom_{{ $field->name }}"
                                         class="select select-bordered"
                                         {{ $field->is_required ? 'required' : '' }}>
-                                        <option value="">Sélectionner...</option>
+                                        <option value="">{{ __('registration.fields.category_placeholder') }}</option>
                                         @foreach($field->options ?? [] as $option)
                                             <option value="{{ $option }}">{{ $option }}</option>
                                         @endforeach
@@ -232,26 +250,14 @@
                     @endforeach
                 @endif
 
-                {{-- Club --}}
-                <div class="form-control mb-6">
-                    <label class="label">
-                        <span class="label-text">Club</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="club"
-                        placeholder="Nom du club (optionnel)"
-                        class="input input-bordered">
-                </div>
-
                 {{-- Boutons --}}
-                <div class="flex gap-4 justify-end">
-                    <button type="reset" class="btn btn-ghost">Réinitialiser</button>
+                <div class="flex gap-4 justify-end mt-6">
+                    <button type="reset" class="btn btn-ghost">{{ __('registration.buttons.back') }}</button>
                     <button type="submit" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Valider l'inscription
+                        {{ __('registration.buttons.submit') }}
                     </button>
                 </div>
 

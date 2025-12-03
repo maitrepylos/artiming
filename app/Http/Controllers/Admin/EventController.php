@@ -29,8 +29,12 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'event_date' => 'required|date',
+            'locale' => 'required|string|in:' . implode(',', array_keys(Event::$availableLocales)),
             'logo' => 'nullable|image|max:2048'
         ]);
+
+        // Gérer le checkbox is_active
+        $validated['is_active'] = $request->has('is_active');
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('logos', 'public');
@@ -57,6 +61,7 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'event_date' => 'required|date',
+            'locale' => 'required|string|in:' . implode(',', array_keys(Event::$availableLocales)),
             'logo' => 'nullable|image|max:2048'
         ]);
 

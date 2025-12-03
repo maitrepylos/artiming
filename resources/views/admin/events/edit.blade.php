@@ -81,6 +81,22 @@
 
                         <div class="form-control mb-4">
                             <label class="label">
+                                <span class="label-text">Langue du formulaire d'inscription</span>
+                            </label>
+                            <select name="locale" class="select select-bordered">
+                                @foreach(\App\Models\Event::$availableLocales as $code => $name)
+                                    <option value="{{ $code }}" {{ $event->locale === $code ? 'selected' : '' }}>
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <label class="label">
+                                <span class="label-text-alt">Cette langue sera utilisée pour le formulaire d'inscription public</span>
+                            </label>
+                        </div>
+
+                        <div class="form-control mb-4">
+                            <label class="label">
                                 <span class="label-text">Logo</span>
                             </label>
                             <input

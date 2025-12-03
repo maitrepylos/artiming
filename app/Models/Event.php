@@ -14,6 +14,7 @@ class Event extends Model
         'description',
         'event_date',
         'is_active',
+        'locale',
         'logo',
         'settings'
     ];
@@ -22,6 +23,14 @@ class Event extends Model
         'event_date' => 'date',
         'is_active' => 'boolean',
         'settings' => 'array'
+    ];
+
+    // Langues disponibles
+    public static $availableLocales = [
+        'fr' => '🇫🇷 Français',
+        'en' => '🇬🇧 English',
+        'nl' => '🇳🇱 Nederlands',
+        'de' => '🇩🇪 Deutsch',
     ];
 
     // Générer automatiquement le slug
@@ -33,11 +42,12 @@ class Event extends Model
             if (empty($event->slug)) {
                 $event->slug = Str::slug($event->name);
             }
+            // Définir la locale par défaut si non spécifiée
+            if (empty($event->locale)) {
+                $event->locale = config('app.locale', 'fr');
+            }
         });
-
     }
-
-
 
     public function categories(): HasMany
     {
@@ -64,5 +74,17 @@ class Event extends Model
     public function getPublicUrlAttribute()
     {
         return route('event.register', $this->slug);
+    }
+
+    // Obtenir le nom de la locale
+    public function getLocaleNameAttribute()
+    {
+        return self::$availableLocales[$this->locale] ?? $this->locale;
+    }
+
+    // Appliquer la locale de l'événement
+    public function applyLocale()
+    {
+        app()->setLocale($this->locale);
     }
 }
